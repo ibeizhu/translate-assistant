@@ -1,0 +1,13 @@
+.en-assistant-block {
+    position: relative;
+}
+.en-assistant-block-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10000;
+    max-width: 1000px;
+    min-width: 100px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #fff;
+}
