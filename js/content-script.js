@@ -1,33 +1,64 @@
 /**
- * 自动翻译生成中文
+ * translate assistant to increase reading fluency for English article
+ * @author frontMoment@sina.com
+ * @github http://github.com/frontmoment
  */
+
 document.addEventListener('DOMContentLoaded', function () {
   var api =
     'https://translate.google.cn/translate_a/single?client=gtx&sl=en&tl=zh-CN&dj=1&ie=UTF-8&oe=UTF-8&dt=at&dt=bd&dt=ex&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&';
 
-  function getTemp(word, nodeName) {
+  var utils = {
+    getCodeNodeParent: function ($el) {
+      var $node = $el;
+      var $parent;
+      while ($node.length > 0) {
+        if ($node[0].nodeName === 'PRE') {
+          $parent = $node;
+          break;
+        }
+        if ($node[0].nodeName === 'BODY') {
+          break;
+        } else {
+          $node = $node.parent();
+        }
+      }
+      return $parent;
+    },
+    randomString: function (len) {
+      len = len || 32;
+      var $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      var maxPos = $chars.length;
+      var pwd = '';
+      for (var i = 0; i < len; i++) {
+        pwd += $chars.charAt(Math.floor(Math.random() * (maxPos + 1)));
+      }
+      return pwd;
+    },
+    preloadImage: function () {
+      var imgList = [
+        'https://img.alicdn.com/tfs/TB1o8GTCNGYBuNjy0FnXXX5lpXa-48-48.png',
+        'https://img.alicdn.com/tfs/TB1CdVQCQyWBuNjy0FpXXassXXa-48-48.png'
+      ];
+      imgList.forEach(function (url) {
+        var img = new Image(url);
+        img.onload = function () {
+        }
+      })
+    }
+  };
+
+  utils.preloadImage();
+
+  function renderTransDom(word, nodeName, id) {
     return (
-      '<div class="trans-assistant-block">' +
+      '<div class="trans-assistant-block" id="' + id + '">' +
       '<div class="trans-assistant-block-text" contentEditable data-node="' + nodeName + '">'
       + word +
       '<div class="trans-assistant-delete"></div>' +
       '</div>' +
       '</div>'
     );
-  }
-
-  function isCodeNode($el) {
-    var flag = false;
-    var $node = $el;
-    while ($node.length > 0) {
-      if ($node[0].nodeName === 'PRE' || $node[0].nodeName === 'CODE') {
-        flag = true;
-        break;
-      } else {
-        $node = $node.parent();
-      }
-    }
-    return flag;
   }
 
   function exportMarkDown(list) {
@@ -51,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return article;
   }
 
+  // short cut for generate translate text
   hotkeys('command+e', function (event) {
     event.preventDefault();
     var selectNode = document.getSelection();
@@ -58,18 +90,28 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!translateWords) {
       return false;
     }
+    var elId = utils.randomString(8);
     var $target = $(selectNode.anchorNode).parent();
     if ($target.find('.trans-assistant-block').length > 0) return;
-    if (isCodeNode($target)) {
-      $target.prepend(getTemp(translateWords, 'CODE'));
+
+    // specific nodes do not translate, like `<code> <pre>`
+    var $parent = utils.getCodeNodeParent($target);
+    if ($parent) {
+      $target.prepend(renderTransDom(translateWords, 'CODE', elId));
+      $target.find('.trans-assistant-block').css({
+        'min-width': $parent.width()
+      });
+      $('#' + elId).Tdrag();
     } else {
       axios
         .get(api + 'q=' + encodeURIComponent(translateWords))
         .then(function (response) {
-          var transStr = (response.data.sentences || []).reduce(function (a, b) {
+          translateWords = (response.data.sentences || []).reduce(function (a, b) {
             return a + (b.trans || '');
           }, '');
-          $target.prepend(getTemp(transStr, $target[0].nodeName));
+          $target.prepend(renderTransDom(translateWords, $target[0].nodeName, elId));
+          $target.find('.trans-assistant-block').width($target.width());
+          $('#' + elId).Tdrag();
         })
         .catch(function (error) {
           console.log(error);
@@ -77,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  // short cut for export markdown
   hotkeys('command+/', function (event) {
     event.preventDefault();
     var translateList = [];
@@ -94,36 +137,4 @@ document.addEventListener('DOMContentLoaded', function () {
       $(this).remove();
     });
   });
-
-  // var handleDrag = {
-  //   position : {
-  //     offsetX: 0, //点击处偏移元素的X
-  //     offsetY: 0, //偏移Y值
-  //     state: 0 //是否正处于拖拽状态，1表示正在拖拽，0表示释放
-  //   },
-  //   onMouseDown:function (e) {
-  //     this.position.offsetX = e.offsetX;
-  //     this.position.offsetY = e.offsetY;
-  //     this.position.state = 1;
-  //     console.log('onMouseMove',e.offsetX,e.offsetY);
-  //   },
-  //   onMouseMove:function (e) {
-  //     if (this.position.state) {
-  //       this.position.endX = e.clientX;
-  //       this.position.endY = e.clientY;
-  //       console.log('onMouseMove',e.offsetX,e.offsetY);
-  //       $(e.currentTarget).css({
-  //         left: this.position.endX - this.position.offsetX,
-  //         top: this.position.endY - this.position.offsetY
-  //       });
-  //     }
-  //   },
-  //   onMouseUp:function () {
-  //     this.position.state = 0;
-  //   }
-  // };
-  //
-  // $('body').on('mousedown','.trans-assistant-block-text',handleDrag.onMouseDown.bind(handleDrag));
-  // $('body').on('mousemove','.trans-assistant-block-text',handleDrag.onMouseMove.bind(handleDrag));
-  // $('body').on('mouseup','.trans-assistant-block-text',handleDrag.onMouseUp.bind(handleDrag));
 });

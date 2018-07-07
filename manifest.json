@@ -23,7 +23,7 @@
 	[
 		{
 			"matches": ["<all_urls>"],
-			"js": ["js/jquery-1.8.3.js", "js/hotkeys.js", "js/axios.js", "js/content-script.js"],
+			"js": ["js/jquery-1.8.3.js", "js/hotkeys.js","js/tdrag.min.js", "js/axios.js", "js/content-script.js"],
 			"css": ["css/custom.css"],
 			"run_at": "document_start"
 		}
