@@ -45,42 +45,47 @@ document.addEventListener('DOMContentLoaded', function () {
         img.onload = function () {
         }
       })
+    },
+    renderTransTextDom: function (word, nodeName, id) {
+      return (
+        '<div class="trans-assistant-block" id="' + id + '">' +
+        '<div class="trans-assistant-block-text" contentEditable data-node="' + nodeName + '">'
+        + word +
+        '<div class="trans-assistant-delete"></div>' +
+        '</div>' +
+        '</div>'
+      );
+    },
+    appendMdPanel: function () {
+      $('body').append('<div class="trans-assistant-markdown"><pre></pre></div>');
+    },
+    renderMarkdown: function (list) {
+      var titleSyntax = {
+        'H1': '#',
+        'H2': '##',
+        'H3': '###',
+        'H4': '####',
+        'H5': '#####'
+      };
+      var article = list.map(function (item) {
+        if (titleSyntax[item.nodeName]) {
+          return titleSyntax[item.nodeName] + ' ' + item.text;
+        } else if (item.nodeName === 'CODE') {
+          return '\`\`\`\n' + item.text + '\n\`\`\`';
+        } else {
+          return item.text;
+        }
+      }).join('\n');
+      console.log(article);
+      $('.trans-assistant-markdown').find('pre').html(article);
+      $('.trans-assistant-markdown').animate({
+        left: 0
+      }, 200);
     }
   };
 
   utils.preloadImage();
-
-  function renderTransDom(word, nodeName, id) {
-    return (
-      '<div class="trans-assistant-block" id="' + id + '">' +
-      '<div class="trans-assistant-block-text" contentEditable data-node="' + nodeName + '">'
-      + word +
-      '<div class="trans-assistant-delete"></div>' +
-      '</div>' +
-      '</div>'
-    );
-  }
-
-  function exportMarkDown(list) {
-    var titleSyntax = {
-      'H1': '#',
-      'H2': '##',
-      'H3': '###',
-      'H4': '####',
-      'H5': '#####'
-    };
-    var article = list.map(function (item) {
-      if (titleSyntax[item.nodeName]) {
-        return titleSyntax[item.nodeName] + ' ' + item.text;
-      } else if (item.nodeName === 'CODE') {
-        return '\`\`\`\n' + item.text + '\n\`\`\`';
-      } else {
-        return item.text;
-      }
-    }).join('\n');
-    console.log(article);
-    return article;
-  }
+  utils.appendMdPanel();
 
   // short cut for generate translate text
   hotkeys('command+e', function (event) {
@@ -94,10 +99,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var $target = $(selectNode.anchorNode).parent();
     if ($target.find('.trans-assistant-block').length > 0) return;
 
-    // specific nodes do not translate, like `<code> <pre>`
+    // specific nodes do not translate, like `<pre>`
     var $parent = utils.getCodeNodeParent($target);
     if ($parent) {
-      $target.prepend(renderTransDom(translateWords, 'CODE', elId));
+      $target.prepend(utils.renderTransTextDom('<pre>' + translateWords + '</pre>', 'CODE', elId));
       $target.find('.trans-assistant-block').css({
         'min-width': $parent.width()
       });
@@ -109,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
           translateWords = (response.data.sentences || []).reduce(function (a, b) {
             return a + (b.trans || '');
           }, '');
-          $target.prepend(renderTransDom(translateWords, $target[0].nodeName, elId));
+          $target.prepend(utils.renderTransTextDom(translateWords, $target[0].nodeName, elId));
           $target.find('.trans-assistant-block').width($target.width());
           $('#' + elId).Tdrag();
         })
@@ -119,8 +124,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // short cut for export markdown
-  hotkeys('command+/', function (event) {
+  // show markdown panel
+  hotkeys('command+right', function (event) {
     event.preventDefault();
     var translateList = [];
     $('.trans-assistant-block-text').each(function () {
@@ -129,7 +134,18 @@ document.addEventListener('DOMContentLoaded', function () {
         text: $(this).text()
       });
     });
-    exportMarkDown(translateList);
+    utils.renderMarkdown(translateList);
+    $('.trans-assistant-markdown').animate({
+      left: 0
+    }, 200);
+  });
+
+  // hide markdown panel
+  hotkeys('command+left', function (event) {
+    event.preventDefault();
+    $('.trans-assistant-markdown').animate({
+      left: -600
+    }, 200);
   });
 
   $('body').on('click', '.trans-assistant-delete', function () {

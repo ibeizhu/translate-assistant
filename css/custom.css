@@ -9,13 +9,20 @@
   top: 0;
   left: 0;
   box-sizing: border-box;
-  padding-left: 10px;
-  padding-right: 30px;
+  padding: 5px 30px 5px 10px;
   border-radius: 4px;
   z-index: 10000;
   min-width: 100px;
   background-color: rgba(0, 0, 0, 0.7);
   color: #fff;
+}
+
+.trans-assistant-block-text pre{
+  padding: 0 !important;
+  margin: 0 !important;
+  color: #fff !important;
+  background: none !important;
+  border: none !important;
 }
 
 .trans-assistant-delete {
@@ -34,6 +41,28 @@
 
 .trans-assistant-delete:hover {
   background-image: url("https://img.alicdn.com/tfs/TB1CdVQCQyWBuNjy0FpXXassXXa-48-48.png");
+}
+
+.trans-assistant-markdown{
+  position: fixed;
+  left: -600px;
+  top: 0;
+  bottom: 0;
+  width: 600px;
+  z-index: 9999999;
+  background-color: #000;
+  color: #ffffff;
+  font-size: 14px;
+  overflow: scroll;
+}
+
+.trans-assistant-markdown pre{
+  padding: 20px !important;
+  margin: 0 !important;
+  color: #fff !important;
+  background: #000 !important;
+  border: none !important;
+  font-size: 14px !important;
 }
 
 .trans-page{
